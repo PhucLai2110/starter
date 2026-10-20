@@ -6,3 +6,14 @@
 I rejected the AI's initial code and provided it with the exact error logs from the Console. I commanded the AI to strictly follow the semantic outline by using `<h1>` for `.title`, `<h2>` for `.name`, `<ul>` for `#catalogue`, and `<li>` for `.card` (including the elements inside the `<template>`).
 
 - **Result:** The AI provided a revised version applying the correct heading hierarchy and list elements. After updating `index.html` and refreshing the page, the Console successfully displayed `Session 4 self-check: 8/8 passed`. The visual layout remained perfectly intact without any distortion, successfully completing Part A.
+
+## Part B
+
+- **Prompt:** I instructed the AI to implement the functionality described in the `app.js` TODOs. The requirements were: (B1) Add items to the cart using event delegation (a single listener on the catalogue) while ignoring sold-out items; (B2) Filter products as the user types and update the status line safely without `innerHTML`; (B3) Prevent the search form from reloading the page when pressing Enter; and (B4) Calculate the total price of the cart.
+
+- **Changed / Rejected:** 
+  1. When I tested the keyboard accessibility (**Done means row 3**), I noticed that I could still focus on the "Add" button of the sold-out Tote bag using the `Tab` key. I realized the AI only used the CSS class `disabled` but forgot to add the native HTML `disabled` attribute to the button in Part A. I rejected the initial state and instructed the AI to add the `disabled` attribute to the sold-out button in `index.html`.
+  2. For the search functionality, I specifically monitored how the AI handled the status box. If the AI had used `innerHTML`, it would have failed **Done means row 8**. I explicitly required the AI to use `textContent` to display the exact search query (`<img src=x onerror=alert(1)>`) safely without triggering an XSS popup alert.
+  3. I tested **Done means row 4** (adding a sold-out item) and confirmed that the AI correctly included a check `if (button.classList.contains('disabled')) return;` so the cart count wouldn't falsely increment.
+
+- **Result:** After the adjustments, the search form prevents page reloads (passing row 9), the status correctly escapes XSS payloads, the cart calculates the total price dynamically, and the `Tab` key correctly skips the disabled "Tote bag" button. All 11 checklist conditions in the "Done means" section have been fully tested and passed.
