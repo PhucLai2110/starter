@@ -19,57 +19,104 @@ const cart = {};
 // ---------------------------------------------------------------------------
 // B1 — Add to cart, with ONE listener
 // ---------------------------------------------------------------------------
-// Listen for 'click' on `catalogue` itself, not on each button.
-// When the click came from an .add button:
-//   1. find its card:   event.target.closest('.card')
-//   2. read its id:     card.dataset.id      (from data-id="...")
-//   3. add 1 to cart[id]   (careful: the first time, cart[id] is undefined)
-//   4. call renderCart()
-// A click anywhere else inside the catalogue must do nothing.
-//
-// Test: "Load more", then Add on a new product. If the count does not move,
-// your listener is on the old buttons, not on the list.
+catalogue.addEventListener('click', (event) => {
+  // Tìm xem thẻ được click có phải là nút .add không
+  const button = event.target.closest('.add');
+  
+  // Nếu click ra ngoài, hoặc click vào sản phẩm "Sold out" (có class disabled) thì bỏ qua
+  if (!button || button.classList.contains('disabled')) return;
 
-// TODO B1: catalogue.addEventListener(...)
-
+  // 1. Tìm thẻ cha .card
+  const card = button.closest('.card');
+  
+  // 2. Đọc id của sản phẩm
+  const id = card.dataset.id;
+  
+  // 3. Tăng số lượng trong giỏ hàng
+  if (!cart[id]) {
+    cart[id] = 0;
+  }
+  cart[id]++;
+  
+  // 4. Gọi hàm render
+  renderCart();
+});
 
 function renderCart() {
-  // TODO B1: write the number of items in the cart into cartCount.
-  // Object.values(cart) gives [2, 1]; add them up. Use textContent.
+  let count = 0;
+  let total = 0;
 
-  // Stretch B4: also write ' · 540.000 đ' into cartTotal.
-  // Prices are in data-price on each card. dataset values are STRINGS:
-  // '180000' + 1 is '1800001'. Convert with Number() first.
-  // Format a number: total.toLocaleString('vi-VN') + ' đ'
+  // Duyệt qua từng sản phẩm trong giỏ hàng để tính tổng
+  for (const [id, qty] of Object.entries(cart)) {
+    count += qty;
+    
+    // Stretch B4: Lấy giá của sản phẩm bằng cách tìm thẻ card tương ứng
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) {
+      const price = Number(card.dataset.price);
+      total += price * qty;
+    }
+  }
+
+  // TODO B1: Ghi số lượng vào cartCount
+  cartCount.textContent = count;
+
+  // Stretch B4: Tính tổng tiền và ghi vào cartTotal
+  if (total > 0) {
+    cartTotal.textContent = ` · ${total.toLocaleString('vi-VN')} đ`;
+  } else {
+    cartTotal.textContent = '';
+  }
 }
 
 // ---------------------------------------------------------------------------
 // B2 — Filter as you type
 // ---------------------------------------------------------------------------
 function applyFilter() {
-  // TODO B2:
-  // 1. Read searchInput.value, trim() it, toLowerCase() it.
-  // 2. For every .card: card.hidden = true unless its .name contains the query
-  //    (compare lower-case with lower-case).
-  // 3. Write ONE line into statusBox, with textContent — never innerHTML:
-  //      query is empty   -> ''  (nothing)
-  //      some cards match -> 'Showing 3 of 8 products'
-  //      nothing matches  -> 'No products match "<exactly what the user typed>"'
+  // Lấy giá trị chính xác người dùng nhập (để hiển thị trạng thái)
+  const exactQuery = searchInput.value;
+  // Xử lý chuỗi để lọc (xóa khoảng trắng thừa, viết thường)
+  const query = exactQuery.trim().toLowerCase();
+  
+  const cards = catalogue.querySelectorAll('.card');
+  let visibleCount = 0;
+
+  for (const card of cards) {
+    const name = card.querySelector('.name').textContent.toLowerCase();
+    
+    // Kiểm tra xem tên sản phẩm có chứa chuỗi tìm kiếm không
+    if (name.includes(query)) {
+      card.hidden = false;
+      visibleCount++;
+    } else {
+      card.hidden = true;
+    }
+  }
+
+  // Hiển thị trạng thái bằng textContent (chống XSS)
+  if (query === '') {
+    statusBox.textContent = '';
+  } else if (visibleCount > 0) {
+    statusBox.textContent = `Showing ${visibleCount} of ${cards.length} products`;
+  } else {
+    statusBox.textContent = `No products match "${exactQuery}"`;
+  }
 }
 
-// TODO B2: call applyFilter on every 'input' event of searchInput.
+// Gọi applyFilter mỗi khi người dùng gõ phím
+searchInput.addEventListener('input', applyFilter);
 
 
 // ---------------------------------------------------------------------------
 // B3 — The search form must not reload the page
 // ---------------------------------------------------------------------------
-// Press Enter in the search box: the browser submits the form, reloads the
-// page and puts ?q=... in the address bar. Stop that: listen for 'submit' on
-// the form, call event.preventDefault(), then applyFilter().
-// This needs Part A first — the search box has to be inside a <form>.
-// Hint: searchInput.form is the form the input belongs to.
-
-// TODO B3
+// Chặn hành vi submit form mặc định (reload trang và thêm ?q= lên thanh địa chỉ)
+if (searchInput.form) {
+  searchInput.form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    applyFilter();
+  });
+}
 
 
 // ---------------------------------------------------------------------------
